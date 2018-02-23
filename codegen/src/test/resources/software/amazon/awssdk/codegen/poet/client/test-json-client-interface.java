@@ -239,6 +239,27 @@ public interface JsonClient extends SdkClient, SdkAutoCloseable {
     /**
      * Some paginated operation with result_key in paginators.json file
      *
+     * @return Result of the PaginatedOperationWithResultKey operation returned by the service.
+     * @throws SdkException
+     *         Base class for all exceptions that can be thrown by the SDK (both service and client). Can be used for
+     *         catch all scenarios.
+     * @throws SdkClientException
+     *         If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws JsonException
+     *         Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
+     * @sample JsonClient.PaginatedOperationWithResultKey
+     * @see #paginatedOperationWithResultKey(PaginatedOperationWithResultKeyRequest)
+     * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/json-service-2010-05-08/PaginatedOperationWithResultKey"
+     *      target="_top">AWS API Documentation</a>
+     */
+    default PaginatedOperationWithResultKeyResponse paginatedOperationWithResultKey() throws SdkServiceException,
+                                                                                             SdkClientException, JsonException {
+        return paginatedOperationWithResultKey(PaginatedOperationWithResultKeyRequest.builder().build());
+    }
+
+    /**
+     * Some paginated operation with result_key in paginators.json file
+     *
      * @param paginatedOperationWithResultKeyRequest
      * @return Result of the PaginatedOperationWithResultKey operation returned by the service.
      * @throws SdkException
@@ -335,8 +356,80 @@ public interface JsonClient extends SdkClient, SdkAutoCloseable {
      * operation.</b>
      * </p>
      *
+     * @return A custom iterable that can be used to iterate through all the response pages.
+     * @throws SdkException
+     *         Base class for all exceptions that can be thrown by the SDK (both service and client). Can be used for
+     *         catch all scenarios.
+     * @throws SdkClientException
+     *         If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws JsonException
+     *         Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
+     * @sample JsonClient.PaginatedOperationWithResultKey
+     * @see #paginatedOperationWithResultKeyPaginator(PaginatedOperationWithResultKeyRequest)
+     * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/json-service-2010-05-08/PaginatedOperationWithResultKey"
+     *      target="_top">AWS API Documentation</a>
+     */
+    default PaginatedOperationWithResultKeyIterable paginatedOperationWithResultKeyPaginator() throws SdkServiceException,
+                                                                                                      SdkClientException, JsonException {
+        return paginatedOperationWithResultKeyPaginator(PaginatedOperationWithResultKeyRequest.builder().build());
+    }
+
+    /**
+     * Some paginated operation with result_key in paginators.json file<br/>
+     * <p>
+     * This is a variant of
+     * {@link #paginatedOperationWithResultKey(software.amazon.awssdk.services.json.model.PaginatedOperationWithResultKeyRequest)}
+     * operation. The return type is a custom iterable that can be used to iterate through all the pages. SDK will
+     * internally handle making service calls for you.
+     * </p>
+     * <p>
+     * When this operation is called, a custom iterable is returned but no service calls are made yet. So there is no
+     * guarantee that the request is valid. As you iterate through the iterable, SDK will start lazily loading response
+     * pages by making service calls until there are no pages left or your iteration stops. If there are errors in your
+     * request, you will see the failures only after you start iterating through the iterable.
+     * </p>
+     *
+     * <p>
+     * The following are few ways to iterate through the response pages:
+     * </p>
+     * 1) Using a Stream
+     *
+     * <pre>
+     * {@code
+     * software.amazon.awssdk.services.json.paginators.PaginatedOperationWithResultKeyIterable responses = client.paginatedOperationWithResultKeyPaginator(request);
+     * responses.stream().forEach(....);
+     * }
+     * </pre>
+     *
+     * 2) Using For loop
+     *
+     * <pre>
+     * {
+     *     &#064;code
+     *     software.amazon.awssdk.services.json.paginators.PaginatedOperationWithResultKeyIterable responses = client
+     *             .paginatedOperationWithResultKeyPaginator(request);
+     *     for (software.amazon.awssdk.services.json.model.PaginatedOperationWithResultKeyResponse response : responses) {
+     *         // do something;
+     *     }
+     * }
+     * </pre>
+     *
+     * 3) Use iterator directly
+     *
+     * <pre>
+     * {@code
+     * software.amazon.awssdk.services.json.paginators.PaginatedOperationWithResultKeyIterable responses = client.paginatedOperationWithResultKeyPaginator(request);
+     * responses.iterator().forEachRemaining(....);
+     * }
+     * </pre>
+     * <p>
+     * <b>Note: If you prefer to have control on service calls, use the
+     * {@link #paginatedOperationWithResultKey(software.amazon.awssdk.services.json.model.PaginatedOperationWithResultKeyRequest)}
+     * operation.</b>
+     * </p>
+     *
      * @param paginatedOperationWithResultKeyRequest
-     * @return Result of the PaginatedOperationWithResultKey operation returned by the service.
+     * @return A custom iterable that can be used to iterate through all the response pages.
      * @throws SdkException
      *         Base class for all exceptions that can be thrown by the SDK (both service and client). Can be used for
      *         catch all scenarios.
@@ -454,7 +547,7 @@ public interface JsonClient extends SdkClient, SdkAutoCloseable {
      * </p>
      *
      * @param paginatedOperationWithoutResultKeyRequest
-     * @return Result of the PaginatedOperationWithoutResultKey operation returned by the service.
+     * @return A custom iterable that can be used to iterate through all the response pages.
      * @throws SdkException
      *         Base class for all exceptions that can be thrown by the SDK (both service and client). Can be used for
      *         catch all scenarios.

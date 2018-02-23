@@ -16,9 +16,6 @@
 package software.amazon.awssdk.core.pagination.async;
 
 import java.util.Iterator;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import org.reactivestreams.Subscriber;
 
@@ -35,112 +32,19 @@ public class PaginatedItemsPublisher<ResponseT, ItemT> implements SdkPublisher<I
 
     private final Function<ResponseT, Iterator<ItemT>> getIteratorFunction;
 
+    private final boolean isLastPage;
+
     public PaginatedItemsPublisher(AsyncPageFetcher<ResponseT> nextPageFetcher,
-                                   Function<ResponseT, Iterator<ItemT>> getIteratorFunction) {
+                                   Function<ResponseT, Iterator<ItemT>> getIteratorFunction,
+                                   boolean isLastPage) {
         this.nextPageFetcher = nextPageFetcher;
         this.getIteratorFunction = getIteratorFunction;
+        this.isLastPage = isLastPage;
     }
 
     @Override
     public void subscribe(Subscriber<? super ItemT> subscriber) {
-        subscriber.onSubscribe(new ItemsSubscription(subscriber));
-    }
-
-    private class ItemsSubscription implements org.reactivestreams.Subscription {
-
-        private AtomicLong outstandingRequests = new AtomicLong(0);
-
-        private AtomicBoolean isTaskRunning = new AtomicBoolean(false);
-
-        private final Subscriber subscriber;
-
-        private volatile Iterator<ItemT> singlePageItemsIterator;
-
-        private volatile ResponseT currentPage;
-
-        ItemsSubscription(Subscriber subscriber) {
-            this.subscriber = subscriber;
-        }
-
-        @Override
-        public void request(long n) {
-            if (n <= 0) {
-                throw new IllegalArgumentException("Non-positive request signals are illegal");
-            }
-
-            outstandingRequests.addAndGet(n);
-
-            synchronized (this) {
-                if (!isTaskRunning.get()) {
-                    isTaskRunning.set(true);
-                    handleRequestsRecursively();
-                }
-            }
-        }
-
-        private void handleRequestsRecursively() {
-            if (currentPage != null && !nextPageFetcher.hasNextPage(currentPage) &&
-                    singlePageItemsIterator != null && !singlePageItemsIterator.hasNext()) {
-                subscriber.onComplete();
-                isTaskRunning.set(false);
-                return;
-            }
-
-            if (outstandingRequests.get() <= 0) {
-                isTaskRunning.set(false);
-                return;
-            }
-
-            /**
-             * Current page is null only the first time the method is called.
-             * Once initialized, current page will never be null
-             */
-            if (currentPage == null && singlePageItemsIterator == null) {
-                fetchNextPage();
-
-            } else if (singlePageItemsIterator != null && singlePageItemsIterator.hasNext()) {
-                sendNextElement();
-
-            } else if (singlePageItemsIterator != null && !singlePageItemsIterator.hasNext() &&
-                       currentPage != null && nextPageFetcher.hasNextPage(currentPage)) {
-                fetchNextPage();
-
-            // All valid cases are covered above. Throw an exception if any combination is missed
-            } else {
-                throw new IllegalStateException("Execution should have not reached here");
-            }
-        }
-
-        private void fetchNextPage() {
-            CompletableFuture<ResponseT> future = nextPageFetcher.nextPage(currentPage);
-            future.whenComplete(((response, error) -> {
-                if (response != null) {
-                    currentPage = response;
-                    singlePageItemsIterator = getIteratorFunction.apply(response);
-                    sendNextElement();
-                }
-                if (error != null) {
-                    subscriber.onError(error);
-                }
-            }));
-        }
-
-        /**
-         * Calls onNext and calls the recursive method.
-         */
-        private void sendNextElement() {
-            if (singlePageItemsIterator.hasNext()) {
-                subscriber.onNext(singlePageItemsIterator.next());
-                outstandingRequests.getAndDecrement();
-            }
-
-            handleRequestsRecursively();
-        }
-
-        @Override
-        public void cancel() {
-            outstandingRequests.set(0);
-            isTaskRunning.set(false);
-        }
+        subscriber.onSubscribe(isLastPage ? new EmptySubscription(subscriber)
+                                          : new ItemsSubscription(subscriber, nextPageFetcher, getIteratorFunction));
     }
 }

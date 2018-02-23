@@ -47,7 +47,7 @@ public class PaginatorsGeneratorTasks extends BaseGeneratorTasks {
     @Override
     protected List<GeneratorTask> createTasks() throws Exception {
         info("Emitting paginator classes");
-        return Stream.concat(createSyncTasks(), createASyncTasks())
+        return Stream.concat(createSyncTasks(), createAsyncTasks())
                      .collect(Collectors.toList());
     }
 
@@ -63,7 +63,7 @@ public class PaginatorsGeneratorTasks extends BaseGeneratorTasks {
         return new PoetGeneratorTask(paginatorsClassDir, model.getFileHeader(), classSpec);
     }
 
-    private Stream<GeneratorTask> createASyncTasks() {
+    private Stream<GeneratorTask> createAsyncTasks() {
         return model.getPaginators().entrySet().stream()
                     .filter(entry -> entry.getValue().isValid())
                     .map(safeFunction(this::createAsyncTask));

@@ -18,6 +18,7 @@ package software.amazon.awssdk.codegen.poet.paginators;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
+import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import java.security.InvalidParameterException;
 import java.util.Collections;
@@ -41,8 +42,10 @@ public abstract class PaginatorsClassSpec implements ClassSpec {
     protected static final String NEXT_PAGE_FETCHER_MEMBER = "nextPageFetcher";
     protected static final String HAS_NEXT_PAGE_METHOD = "hasNextPage";
     protected static final String NEXT_PAGE_METHOD = "nextPage";
+    protected static final String RESUME_METHOD = "resume";
     protected static final String PREVIOUS_PAGE_METHOD_ARGUMENT = "previousPage";
     protected static final String RESPONSE_LITERAL = "response";
+    protected static final String LAST_SUCCESSFUL_PAGE_LITERAL = "lastSuccessfulPage";
 
     protected final IntermediateModel model;
     protected final String c2jOperationName;
@@ -88,6 +91,26 @@ public abstract class PaginatorsClassSpec implements ClassSpec {
 
     protected String nextPageFetcherClassName() {
         return operationModel.getReturnType().getReturnType() + "Fetcher";
+    }
+
+    protected MethodSpec.Builder resumeMethodBuilder() {
+        return MethodSpec.methodBuilder(RESUME_METHOD)
+                         .addModifiers(Modifier.PUBLIC)
+                         .addParameter(responseType(), LAST_SUCCESSFUL_PAGE_LITERAL, Modifier.FINAL)
+                         .returns(className())
+                         .addCode(CodeBlock.builder()
+                                           .beginControlFlow("if ($L.$L($L))", NEXT_PAGE_FETCHER_MEMBER,
+                                                             HAS_NEXT_PAGE_METHOD, LAST_SUCCESSFUL_PAGE_LITERAL)
+                                           .addStatement("return new $T($L, $L)", className(), CLIENT_MEMBER,
+                                                         constructRequestFromLastPage(LAST_SUCCESSFUL_PAGE_LITERAL))
+                                           .endControlFlow()
+                                           .build())
+                         .addJavadoc(CodeBlock.builder()
+                                              .add("<p>A helper method to resume the pages in case of unexpected failures. "
+                                                   + "The method takes the last successful response page as input and returns an "
+                                                   + "instance of {@link $T} that can be used to retrieve the consecutive pages "
+                                                   + "that follows the input page.</p>", className())
+                                              .build());
     }
 
     /*
@@ -188,19 +211,32 @@ public abstract class PaginatorsClassSpec implements ClassSpec {
      */
     private String codeToGetNextPageIfOldResponseIsNotNull() {
         StringBuilder sb = new StringBuilder();
+        sb.append(String.format("return %s.%s(%s)", CLIENT_MEMBER,
+                                operationModel.getMethodName(),
+                                constructRequestFromLastPage(PREVIOUS_PAGE_METHOD_ARGUMENT)));
+        return sb.toString();
+    }
 
-        sb.append(String.format("return %s.%s(%s.toBuilder()", CLIENT_MEMBER, operationModel.getMethodName(), REQUEST_MEMBER));
+    /**
+     * Generates the code to construct a request object from the last successful page
+     * by setting the fields required to get the next page.
+     *
+     * Sample code: if responsePage string is "response"
+     * firstRequest.toBuilder().exclusiveStartTableName(response.lastEvaluatedTableName()).build()
+     */
+    protected String constructRequestFromLastPage(String responsePage) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("%s.toBuilder()", REQUEST_MEMBER));
 
         List<String> requestSetterNames = fluentSetterMethodNamesForInputToken();
         List<String> responseGetterMethods = fluentGetterMethodsForOutputToken();
 
         for (int i = 0; i < paginatorDefinition.getInputToken().size(); i++) {
-            sb.append(String.format(".%s(%s.%s)", requestSetterNames.get(i), PREVIOUS_PAGE_METHOD_ARGUMENT,
+            sb.append(String.format(".%s(%s.%s)", requestSetterNames.get(i), responsePage,
                                     responseGetterMethods.get(i)));
         }
 
-        sb.append(".build())");
-
+        sb.append(".build()");
         return sb.toString();
     }
 

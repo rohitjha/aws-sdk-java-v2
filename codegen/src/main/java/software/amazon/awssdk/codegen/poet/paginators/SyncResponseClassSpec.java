@@ -43,6 +43,8 @@ import software.amazon.awssdk.core.pagination.SyncPageFetcher;
  */
 public class SyncResponseClassSpec extends PaginatorsClassSpec {
 
+    private static final String ITERATOR_METHOD = "iterator";
+
     public SyncResponseClassSpec(IntermediateModel model, String c2jOperationName, PaginatorDefinition paginatorDefinition) {
         super(model, c2jOperationName, paginatorDefinition);
     }
@@ -50,7 +52,7 @@ public class SyncResponseClassSpec extends PaginatorsClassSpec {
     @Override
     public TypeSpec poetSpec() {
         TypeSpec.Builder specBuilder = TypeSpec.classBuilder(className())
-                                               .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+                                               .addModifiers(Modifier.PUBLIC)
                                                .addAnnotation(PoetUtils.GENERATED)
                                                .addSuperinterface(getSyncResponseInterface())
                                                .addFields(Stream.of(syncClientInterfaceField(),
@@ -60,6 +62,7 @@ public class SyncResponseClassSpec extends PaginatorsClassSpec {
                                                .addMethod(constructor())
                                                .addMethod(iteratorMethod())
                                                .addMethods(getMethodSpecsForResultKeyList())
+                                               .addMethod(resumeMethod())
                                                .addJavadoc(paginationDocs.getDocsForSyncResponseClass(
                                                    getClientInterfaceName()))
                                                .addType(nextPageFetcherClass());
@@ -110,7 +113,7 @@ public class SyncResponseClassSpec extends PaginatorsClassSpec {
      * from the interface.
      */
     private MethodSpec iteratorMethod() {
-        return MethodSpec.methodBuilder("iterator")
+        return MethodSpec.methodBuilder(ITERATOR_METHOD)
                 .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC)
                 .returns(ParameterizedTypeName.get(ClassName.get(Iterator.class), responseType()))
@@ -165,8 +168,8 @@ public class SyncResponseClassSpec extends PaginatorsClassSpec {
                          .addCode("\n")
                          .addStatement("return new $T(this, getIterator)", PaginatedItemsIterable.class)
                          .addJavadoc(CodeBlock.builder()
-                                              .add("Returns an iterable to iterate through the paginated {@link $T#$L()} member. "
-                                                   + "The returned iterable is used to iterate through the results across all "
+                                              .add("Returns an iterable to iterate through the paginated {@link $T#$L()} member."
+                                                   + " The returned iterable is used to iterate through the results across all "
                                                    + "response pages and not a single page.\n",
                                                    responseType(), resultKeyModel.getFluentGetterMethodName())
                                               .add("\n")
@@ -200,6 +203,23 @@ public class SyncResponseClassSpec extends PaginatorsClassSpec {
                                             .addParameter(responseType(), PREVIOUS_PAGE_METHOD_ARGUMENT)
                                             .returns(responseType())
                                             .addCode(nextPageMethodBody())
+                                            .build())
+                       .build();
+    }
+
+    private MethodSpec resumeMethod() {
+        return resumeMethodBuilder().addStatement("return $L", anonymousClassWithEmptyIterator())
+                                    .build();
+    }
+
+    private TypeSpec anonymousClassWithEmptyIterator() {
+        return TypeSpec.anonymousClassBuilder("$L, $L", CLIENT_MEMBER, REQUEST_MEMBER)
+                       .addSuperinterface(className())
+                       .addMethod(MethodSpec.methodBuilder(ITERATOR_METHOD)
+                                            .addAnnotation(Override.class)
+                                            .addModifiers(Modifier.PUBLIC)
+                                            .returns(ParameterizedTypeName.get(ClassName.get(Iterator.class), responseType()))
+                                            .addStatement("return $T.emptyIterator()", TypeName.get(Collections.class))
                                             .build())
                        .build();
     }

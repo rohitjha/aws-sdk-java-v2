@@ -354,16 +354,18 @@ final class DefaultJsonAsyncClient implements JsonAsyncClient {
      * </p>
      * <p>
      * When the operation is called, an instance of this class is returned. At this point, no service calls are made yet
-     * and so there is no guarantee that the request is valid. The subscribe method should be called as a request to
-     * stream data. For more info, see {@link org.reactivestreams.Publisher#subscribe(org.reactivestreams.Subscriber)}.
-     * If there are errors in your request, you will see the failures only after you start streaming the data.
+     * and so there is no guarantee that the request is valid. If there are errors in your request, you will see the
+     * failures only after you start streaming the data. The subscribe method should be called as a request to start
+     * streaming data. For more info, see
+     * {@link org.reactivestreams.Publisher#subscribe(org.reactivestreams.Subscriber)}. Each call to the subscribe
+     * method will result in a new {@link org.reactivestreams.Subscription} i.e., a new contract to stream data from the
+     * starting request.
      * </p>
      *
      * <p>
      * The following are few ways to use the response class:
      * </p>
-     * 1) Using the forEach helper method. This uses @
-     * {@link software.amazon.awssdk.core.pagination.async.SequentialSubscriber} internally
+     * 1) Using the forEach helper method
      *
      * <pre>
      * {@code
@@ -395,8 +397,7 @@ final class DefaultJsonAsyncClient implements JsonAsyncClient {
      * </p>
      *
      * @param paginatedOperationWithResultKeyRequest
-     * @return A Java Future containing the result of the PaginatedOperationWithResultKey operation returned by the
-     *         service.<br/>
+     * @return A custom publisher that can be subscribed to request a stream of response pages.<br/>
      *         The CompletableFuture returned by this method can be completed exceptionally with the following
      *         exceptions.
      *         <ul>
@@ -426,16 +427,18 @@ final class DefaultJsonAsyncClient implements JsonAsyncClient {
      * </p>
      * <p>
      * When the operation is called, an instance of this class is returned. At this point, no service calls are made yet
-     * and so there is no guarantee that the request is valid. The subscribe method should be called as a request to
-     * stream data. For more info, see {@link org.reactivestreams.Publisher#subscribe(org.reactivestreams.Subscriber)}.
-     * If there are errors in your request, you will see the failures only after you start streaming the data.
+     * and so there is no guarantee that the request is valid. If there are errors in your request, you will see the
+     * failures only after you start streaming the data. The subscribe method should be called as a request to start
+     * streaming data. For more info, see
+     * {@link org.reactivestreams.Publisher#subscribe(org.reactivestreams.Subscriber)}. Each call to the subscribe
+     * method will result in a new {@link org.reactivestreams.Subscription} i.e., a new contract to stream data from the
+     * starting request.
      * </p>
      *
      * <p>
      * The following are few ways to use the response class:
      * </p>
-     * 1) Using the forEach helper method. This uses @
-     * {@link software.amazon.awssdk.core.pagination.async.SequentialSubscriber} internally
+     * 1) Using the forEach helper method
      *
      * <pre>
      * {@code
@@ -467,8 +470,7 @@ final class DefaultJsonAsyncClient implements JsonAsyncClient {
      * </p>
      *
      * @param paginatedOperationWithoutResultKeyRequest
-     * @return A Java Future containing the result of the PaginatedOperationWithoutResultKey operation returned by the
-     *         service.<br/>
+     * @return A custom publisher that can be subscribed to request a stream of response pages.<br/>
      *         The CompletableFuture returned by this method can be completed exceptionally with the following
      *         exceptions.
      *         <ul>

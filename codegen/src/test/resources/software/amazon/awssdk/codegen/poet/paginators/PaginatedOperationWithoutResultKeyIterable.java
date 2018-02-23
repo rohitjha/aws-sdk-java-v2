@@ -1,5 +1,6 @@
 package software.amazon.awssdk.services.jsonprotocoltests.paginators;
 
+import java.util.Collections;
 import java.util.Iterator;
 import javax.annotation.Generated;
 import software.amazon.awssdk.core.pagination.PaginatedResponsesIterator;
@@ -64,7 +65,7 @@ import software.amazon.awssdk.services.jsonprotocoltests.model.PaginatedOperatio
  * </p>
  */
 @Generated("software.amazon.awssdk:codegen")
-public final class PaginatedOperationWithoutResultKeyIterable implements SdkIterable<PaginatedOperationWithoutResultKeyResponse> {
+public class PaginatedOperationWithoutResultKeyIterable implements SdkIterable<PaginatedOperationWithoutResultKeyResponse> {
     private final JsonProtocolTestsClient client;
 
     private final PaginatedOperationWithoutResultKeyRequest firstRequest;
@@ -81,6 +82,26 @@ public final class PaginatedOperationWithoutResultKeyIterable implements SdkIter
     @Override
     public Iterator<PaginatedOperationWithoutResultKeyResponse> iterator() {
         return new PaginatedResponsesIterator(nextPageFetcher);
+    }
+
+    /**
+     * <p>
+     * A helper method to resume the pages in case of unexpected failures. The method takes the last successful response
+     * page as input and returns an instance of {@link PaginatedOperationWithoutResultKeyIterable} that can be used to
+     * retrieve the consecutive pages that follows the input page.
+     * </p>
+     */
+    public PaginatedOperationWithoutResultKeyIterable resume(final PaginatedOperationWithoutResultKeyResponse lastSuccessfulPage) {
+        if (nextPageFetcher.hasNextPage(lastSuccessfulPage)) {
+            return new PaginatedOperationWithoutResultKeyIterable(client, firstRequest.toBuilder()
+                                                                                      .nextToken(lastSuccessfulPage.nextToken()).build());
+        }
+        return new PaginatedOperationWithoutResultKeyIterable(client, firstRequest) {
+            @Override
+            public Iterator<PaginatedOperationWithoutResultKeyResponse> iterator() {
+                return Collections.emptyIterator();
+            }
+        };
     }
 
     private class PaginatedOperationWithoutResultKeyResponseFetcher implements

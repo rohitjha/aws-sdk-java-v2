@@ -15,85 +15,41 @@
 
 package software.amazon.awssdk.core.pagination.async;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
 /**
- * A publisher to request for a stream of response pages. The class can be used to request data until
- * there are no more pages.
+ * An implementation of the {@link Subscription} interface that can be used to signal and cancel demand for
+ * paginated response pages.
  *
  * @param <ResponseT> The type of a single response page
  */
-public class ResponsesSubscription<ResponseT> implements Subscription {
-    private final Subscriber subscriber;
-
-    private AtomicLong outstandingRequests = new AtomicLong(0);
-
-    private AsyncPageFetcher<ResponseT> nextPageFetcher;
-
-    private volatile ResponseT currentPage;
-
-    private AtomicBoolean isTaskRunning = new AtomicBoolean(false);
+public class ResponsesSubscription<ResponseT> extends PaginationSubscription<ResponseT> {
 
     public ResponsesSubscription(Subscriber subscriber, AsyncPageFetcher<ResponseT> nextPageFetcher) {
-        this.subscriber = subscriber;
-        this.nextPageFetcher = nextPageFetcher;
+        super(subscriber, nextPageFetcher);
     }
 
-    @Override
-    public void request(long n) {
-        if (n <= 0) {
-            throw new IllegalArgumentException("Non-positive request signals are illegal");
-        }
-
-        outstandingRequests.addAndGet(n);
-
-        synchronized (this) {
-            if (!isTaskRunning.get()) {
-                isTaskRunning.set(true);
-                handleRequest();
-            }
-        }
-    }
-
-    /**
-     * Recursive method to deal with requests until there are no outstandingRequests or
-     * no more pages.
-     */
-    private synchronized void handleRequest() {
-        if (currentPage != null && !nextPageFetcher.hasNextPage(currentPage)) {
-            subscriber.onComplete();
-            isTaskRunning.set(false);
+    protected void handleRequests() {
+        if (!hasNextPage()) {
+            completeSubscription();
             return;
         }
 
-        if (outstandingRequests.get() <= 0) {
-            isTaskRunning.set(false);
-            return;
+        if (outstandingRequests.get() > 0 && !isTerminated()) {
+            outstandingRequests.getAndDecrement();
+            nextPageFetcher.nextPage(currentPage)
+                           .whenComplete(((response, error) -> {
+                               if (response != null) {
+                                   currentPage = response;
+                                   subscriber.onNext(response);
+                                   handleRequests();
+                               }
+                               if (error != null) {
+                                   subscriber.onError(error);
+                                   cleanup();
+                               }
+                           }));
         }
-
-        outstandingRequests.getAndDecrement();
-
-        CompletableFuture<ResponseT> future = nextPageFetcher.nextPage(currentPage);
-        future.whenComplete((response, error) -> {
-            if (response != null) {
-                currentPage = response;
-                subscriber.onNext(response);
-                handleRequest();
-            }
-
-            if (error != null) {
-                subscriber.onError(error);
-            }
-        });
-    }
-
-    @Override
-    public void cancel() {
-        outstandingRequests.set(0);
-        isTaskRunning.set(false);
     }
 }

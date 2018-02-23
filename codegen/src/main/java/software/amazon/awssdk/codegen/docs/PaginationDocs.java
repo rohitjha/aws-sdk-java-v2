@@ -20,6 +20,7 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import software.amazon.awssdk.codegen.model.intermediate.IntermediateModel;
 import software.amazon.awssdk.codegen.model.intermediate.OperationModel;
 import software.amazon.awssdk.codegen.poet.PoetExtensions;
@@ -90,11 +91,12 @@ public class PaginationDocs {
                              operationModel.getMethodName(), requestType())
                         .add("<p>When the operation is called, an instance of this class is returned.  At this point, "
                              + "no service calls are made yet and so there is no guarantee that the request is valid. "
-                             + "The subscribe method should be called as a request to stream data. For more info, "
-                             + "see {@link $T#$L($T)}. If there are errors in your "
-                             + "request, you will see the failures only after you start streaming the data.</p>",
-                             getPublisherType(), SUBSCRIBE_METHOD_NAME, getSubscriberType())
-                         .add(getAsyncCodeSnippets())
+                             + "If there are errors in your request, you will see the failures only after you start streaming "
+                             + "the data. The subscribe method should be called as a request to start streaming data. "
+                             + "For more info, see {@link $T#$L($T)}. Each call to the subscribe method will result in a new "
+                             + "{@link $T} i.e., a new contract to stream data from the starting request.</p>",
+                             getPublisherType(), SUBSCRIBE_METHOD_NAME, getSubscriberType(), getSubscriptionType())
+                        .add(getAsyncCodeSnippets())
                         .build()
                         .toString();
     }
@@ -112,10 +114,11 @@ public class PaginationDocs {
                              syncResponsePageType())
                         .add("<p>When the operation is called, an instance of this class is returned.  At this point, "
                              + "no service calls are made yet and so there is no guarantee that the request is valid. "
-                             + "The subscribe method should be called as a request to stream data. For more info, "
-                             + "see {@link $T#$L($T)}. If there are errors in your "
-                             + "request, you will see the failures only after you start streaming the data.</p>",
-                             getPublisherType(), SUBSCRIBE_METHOD_NAME, getSubscriberType())
+                             + "If there are errors in your request, you will see the failures only after you start streaming "
+                             + "the data. The subscribe method should be called as a request to start streaming data. "
+                             + "For more info, see {@link $T#$L($T)}. Each call to the subscribe method will result in a new "
+                             + "{@link $T} i.e., a new contract to stream data from the starting request.</p>",
+                             getPublisherType(), SUBSCRIBE_METHOD_NAME, getSubscriberType(), getSubscriptionType())
                         .add(getAsyncCodeSnippets())
                         .build()
                         .toString();
@@ -160,7 +163,7 @@ public class PaginationDocs {
 
         return CodeBlock.builder()
                         .add("\n\n<p>The following are few ways to use the response class:</p>")
-                        .add("1) Using the forEach helper method. This uses @{@link $T} internally",
+                        .add("1) Using the forEach helper method",
                              TypeName.get(SequentialSubscriber.class))
                         .add(buildCode(CodeBlock.builder()
                                                 .add(callOperationOnClient)
@@ -254,5 +257,12 @@ public class PaginationDocs {
      */
     private ClassName getSubscriberType() {
         return ClassName.get(Subscriber.class);
+    }
+
+    /**
+     * @return A Poet {@link ClassName} for the reactive streams {@link Subscription}.
+     */
+    private ClassName getSubscriptionType() {
+        return ClassName.get(Subscription.class);
     }
 }

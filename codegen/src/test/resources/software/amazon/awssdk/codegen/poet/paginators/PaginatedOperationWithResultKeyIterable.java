@@ -68,7 +68,7 @@ import software.amazon.awssdk.services.jsonprotocoltests.model.SimpleStruct;
  * </p>
  */
 @Generated("software.amazon.awssdk:codegen")
-public final class PaginatedOperationWithResultKeyIterable implements SdkIterable<PaginatedOperationWithResultKeyResponse> {
+public class PaginatedOperationWithResultKeyIterable implements SdkIterable<PaginatedOperationWithResultKeyResponse> {
     private final JsonProtocolTestsClient client;
 
     private final PaginatedOperationWithResultKeyRequest firstRequest;
@@ -104,6 +104,26 @@ public final class PaginatedOperationWithResultKeyIterable implements SdkIterabl
             return Collections.emptyIterator();
         };
         return new PaginatedItemsIterable(this, getIterator);
+    }
+
+    /**
+     * <p>
+     * A helper method to resume the pages in case of unexpected failures. The method takes the last successful response
+     * page as input and returns an instance of {@link PaginatedOperationWithResultKeyIterable} that can be used to
+     * retrieve the consecutive pages that follows the input page.
+     * </p>
+     */
+    public PaginatedOperationWithResultKeyIterable resume(final PaginatedOperationWithResultKeyResponse lastSuccessfulPage) {
+        if (nextPageFetcher.hasNextPage(lastSuccessfulPage)) {
+            return new PaginatedOperationWithResultKeyIterable(client, firstRequest.toBuilder()
+                                                                                   .nextToken(lastSuccessfulPage.nextToken()).build());
+        }
+        return new PaginatedOperationWithResultKeyIterable(client, firstRequest) {
+            @Override
+            public Iterator<PaginatedOperationWithResultKeyResponse> iterator() {
+                return Collections.emptyIterator();
+            }
+        };
     }
 
     private class PaginatedOperationWithResultKeyResponseFetcher implements

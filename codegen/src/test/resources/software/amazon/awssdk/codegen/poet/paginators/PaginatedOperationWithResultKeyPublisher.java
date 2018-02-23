@@ -7,6 +7,7 @@ import java.util.function.Function;
 import javax.annotation.Generated;
 import org.reactivestreams.Subscriber;
 import software.amazon.awssdk.core.pagination.async.AsyncPageFetcher;
+import software.amazon.awssdk.core.pagination.async.EmptySubscription;
 import software.amazon.awssdk.core.pagination.async.PaginatedItemsPublisher;
 import software.amazon.awssdk.core.pagination.async.ResponsesSubscription;
 import software.amazon.awssdk.core.pagination.async.SdkPublisher;
@@ -26,16 +27,17 @@ import software.amazon.awssdk.services.jsonprotocoltests.model.SimpleStruct;
  * </p>
  * <p>
  * When the operation is called, an instance of this class is returned. At this point, no service calls are made yet and
- * so there is no guarantee that the request is valid. The subscribe method should be called as a request to stream
- * data. For more info, see {@link org.reactivestreams.Publisher#subscribe(org.reactivestreams.Subscriber)}. If there
- * are errors in your request, you will see the failures only after you start streaming the data.
+ * so there is no guarantee that the request is valid. If there are errors in your request, you will see the failures
+ * only after you start streaming the data. The subscribe method should be called as a request to start streaming data.
+ * For more info, see {@link org.reactivestreams.Publisher#subscribe(org.reactivestreams.Subscriber)}. Each call to the
+ * subscribe method will result in a new {@link org.reactivestreams.Subscription} i.e., a new contract to stream data
+ * from the starting request.
  * </p>
  *
  * <p>
  * The following are few ways to use the response class:
  * </p>
- * 1) Using the forEach helper method. This uses @
- * {@link software.amazon.awssdk.core.pagination.async.SequentialSubscriber} internally
+ * 1) Using the forEach helper method
  *
  * <pre>
  * {@code
@@ -67,12 +69,14 @@ import software.amazon.awssdk.services.jsonprotocoltests.model.SimpleStruct;
  * </p>
  */
 @Generated("software.amazon.awssdk:codegen")
-public final class PaginatedOperationWithResultKeyPublisher implements SdkPublisher<PaginatedOperationWithResultKeyResponse> {
+public class PaginatedOperationWithResultKeyPublisher implements SdkPublisher<PaginatedOperationWithResultKeyResponse> {
     private final JsonProtocolTestsAsyncClient client;
 
     private final PaginatedOperationWithResultKeyRequest firstRequest;
 
     private final AsyncPageFetcher nextPageFetcher;
+
+    private boolean isLastPage;
 
     public PaginatedOperationWithResultKeyPublisher(final JsonProtocolTestsAsyncClient client,
                                                     final PaginatedOperationWithResultKeyRequest firstRequest) {
@@ -98,7 +102,32 @@ public final class PaginatedOperationWithResultKeyPublisher implements SdkPublis
             }
             return Collections.emptyIterator();
         };
-        return new PaginatedItemsPublisher(new PaginatedOperationWithResultKeyResponseFetcher(), getIterator);
+        return new PaginatedItemsPublisher(new PaginatedOperationWithResultKeyResponseFetcher(), getIterator, isLastPage);
+    }
+
+    /**
+     * <p>
+     * A helper method to resume the pages in case of unexpected failures. The method takes the last successful response
+     * page as input and returns an instance of {@link PaginatedOperationWithResultKeyPublisher} that can be used to
+     * retrieve the consecutive pages that follows the input page.
+     * </p>
+     */
+    public PaginatedOperationWithResultKeyPublisher resume(final PaginatedOperationWithResultKeyResponse lastSuccessfulPage) {
+        if (nextPageFetcher.hasNextPage(lastSuccessfulPage)) {
+            return new PaginatedOperationWithResultKeyPublisher(client, firstRequest.toBuilder()
+                                                                                    .nextToken(lastSuccessfulPage.nextToken()).build());
+        }
+        return new PaginatedOperationWithResultKeyPublisher(client, firstRequest) {
+            @Override
+            public void subscribe(Subscriber<? super PaginatedOperationWithResultKeyResponse> subscriber) {
+                subscriber.onSubscribe(new EmptySubscription(subscriber));
+            }
+        }.withLastPage(true);
+    }
+
+    PaginatedOperationWithResultKeyPublisher withLastPage(boolean isLastPage) {
+        this.isLastPage = isLastPage;
+        return this;
     }
 
     private class PaginatedOperationWithResultKeyResponseFetcher implements

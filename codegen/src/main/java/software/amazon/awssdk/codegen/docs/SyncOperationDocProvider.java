@@ -214,7 +214,12 @@ class SyncOperationDocProvider extends OperationDocProvider {
 
         @Override
         protected String appendToDescription() {
-            return opModel.isPaginated() ? paginationDocs.getDocsForSyncOperation() : "";
+            return paginationDocs.getDocsForSyncOperation();
+        }
+
+        @Override
+        protected void applyReturns(DocumentationBuilder docBuilder) {
+            docBuilder.returns("A custom iterable that can be used to iterate through all the response pages.");
         }
     }
 

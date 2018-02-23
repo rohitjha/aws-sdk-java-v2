@@ -166,7 +166,12 @@ class AsyncOperationDocProvider extends OperationDocProvider {
 
         @Override
         protected String appendToDescription() {
-            return opModel.isPaginated() ? paginationDocs.getDocsForAsyncOperation() : "";
+            return paginationDocs.getDocsForAsyncOperation();
+        }
+
+        @Override
+        protected void applyReturns(DocumentationBuilder docBuilder) {
+            docBuilder.returns("A custom publisher that can be subscribed to request a stream of response pages.");
         }
     }
 

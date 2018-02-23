@@ -276,7 +276,7 @@ final class DefaultJsonClient implements JsonClient {
      * </p>
      *
      * @param paginatedOperationWithResultKeyRequest
-     * @return Result of the PaginatedOperationWithResultKey operation returned by the service.
+     * @return A custom iterable that can be used to iterate through all the response pages.
      * @throws SdkException
      *         Base class for all exceptions that can be thrown by the SDK (both service and client). Can be used for
      *         catch all scenarios.
@@ -384,7 +384,7 @@ final class DefaultJsonClient implements JsonClient {
      * </p>
      *
      * @param paginatedOperationWithoutResultKeyRequest
-     * @return Result of the PaginatedOperationWithoutResultKey operation returned by the service.
+     * @return A custom iterable that can be used to iterate through all the response pages.
      * @throws SdkException
      *         Base class for all exceptions that can be thrown by the SDK (both service and client). Can be used for
      *         catch all scenarios.
